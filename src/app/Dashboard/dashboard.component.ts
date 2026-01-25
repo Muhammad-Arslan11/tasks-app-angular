@@ -1,78 +1,90 @@
-import { Component, OnInit, inject, EventEmitter, Output} from '@angular/core';
-import { CommonModule} from '@angular/common';
+import { Component, OnInit, inject, EventEmitter, Output } from '@angular/core';
+import { CommonModule } from '@angular/common';
 import { CreateTaskComponent } from './create-task/create-task.component';
 import { HttpClient } from '@angular/common/http';
 import { Inject } from '@angular/core';
 import { Task } from '../Model/Task';
 import { pipe, map } from 'rxjs';
+import { TaskService } from '../Services/task.service';
 
 @Component({
   selector: 'app-dashboard',
   templateUrl: './dashboard.component.html',
   styleUrls: ['./dashboard.css'],
-  standalone:true,
-  imports:[CreateTaskComponent, CommonModule]
+  standalone: true,
+  imports: [CreateTaskComponent, CommonModule]
 })
 export class DashboardComponent {
-  tasks:any[] = [];
-  showCreateTaskForm: boolean = false;
-  http:HttpClient = inject(HttpClient);
+  constructor(private taskService: TaskService) { }
 
-  ngOnInit(){
+  tasks: any[] = [];
+  showCreateTaskForm: boolean = false;
+  http: HttpClient = inject(HttpClient);
+  selectedId: string | undefined;
+  editMode:boolean = false;
+  selectedTask!:Task;
+
+  ngOnInit() {
     // this.fetchAllTasks();
   }
 
-  OpenCreateTaskForm(){
-    // console.log('OpenCreateTaskForm');
+  OpenCreateTaskForm() {
     this.showCreateTaskForm = true;
   }
 
-  CloseCreateTaskForm(){
+  CloseCreateTaskForm() {
     this.showCreateTaskForm = false;
   }
-  createTask(data:any){
-  console.log('data: ',data);
-  const url = 'https://angular-httpclient-6c7b0-default-rtdb.asia-southeast1.firebasedatabase.app/task.json';
-  const req = this.http.post(url,data, {headers:{'my-header':'hello'}}
-).subscribe({
-   next:(res)=>console.log(res),
-   error:(err)=>console.log('err: ',err)
-});
-}
-fetchAllTasks(){
-  const url = 'https://angular-httpclient-6c7b0-default-rtdb.asia-southeast1.firebasedatabase.app/task.json';
-  const req = this.http.get<{[key:string]:Task}>(url).pipe(map((res)=>{
-    let task = [];
-    for(let key in res){
-        if(res.hasOwnProperty(key)){
-      task.push({...res[key], id:key});
+  createOrUpdateTask(data: Task) {
+    console.log('data: ',data);
+    if(this.editMode){
+      this.selectedTask = data;
+      this.taskService.updateTask(data, this.selectedId,).subscribe({
+        next:(res)=> {
+          if(!res){
+            return;
+          }
+          // update locally
+          console.log('-------')
+          const taskToUpdate = this.tasks.findIndex((t)=> t.id === this.selectedId);
+          const updatedTask = this.tasks[taskToUpdate] = data;
+          return this.tasks[taskToUpdate] = updatedTask;
         }
+      });
+    }else{
+      this.selectedTask = { title: '',desc: '', assignedTo: '', createdAt: '',priority: '',status: '',}
+      this.taskService.createTask(data).subscribe()
     }
-    // this.tasks = task;
-    return task;
-  })).subscribe(task => {
-    console.log(task);
-    setTimeout(() => {this.tasks = task}, 0);
-  
+  }
+  fetchAllTasks() {
+    this.taskService.getAllTasks().subscribe({
+      next: (task) => {
+        console.log(task);
+        setTimeout(() => {
+          this.tasks = task;
+        }, 100);
+      },
+      error:(error)=>{console.log(error)}
+    });
+  }
+  editTask(id: string) {
+    this.showCreateTaskForm = true;
+    this.selectedId = id;
+    this.editMode = true;
+    // get the data from id
+    this.selectedTask = this.tasks.find((t)=> t.id === id);
+  }
+  deleteTask(id: string | undefined) {
+   this.taskService.deleteTask(id).subscribe({
+      next: (res) => {
+        // console.log(res);
+        this.tasks = this.tasks.filter((task) => task.id !== id);
+      },
+      error: (error) => console.log(error),
 
-}); 
-}
- editTask(id:string){
-   
- }
- deleteTask(id:string | undefined){
-  const url = `https://angular-httpclient-6c7b0-default-rtdb.asia-southeast1.firebasedatabase.app/task/`+id+`.json`;
-   this.http.delete(url).subscribe({
-    next:(res)=> {
-      console.log(res);
-      this.tasks = this.tasks.filter((task)=> task.id !== id);
-    },
-    error:(err)=> console.log(err),
-
-   });
- }
-  deleteAllTasks(){
-  const url = `https://angular-httpclient-6c7b0-default-rtdb.asia-southeast1.firebasedatabase.app/task/.json`;
-   this.http.delete(url).subscribe();
- }
+    });
+  }
+  deleteAllTasks() {
+      this.taskService.deleteAllTasks().subscribe();
+  }
 }
