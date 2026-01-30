@@ -20,18 +20,9 @@ export class CreateTaskComponent {
   @ViewChild('taskForm') taskForm!:NgForm;
 
   ngOnInit(){
-    console.log('editTask: ',this.editTask);
-    console.log('selectedTask: ', this.selectedTask);
+    // console.log('editTask: ',this.editTask);
+    // console.log('selectedTask: ', this.selectedTask);
   }
-  ngOnChanges(changes:SimpleChanges){
-    if (changes['editTask']) {
-      console.log('editTask changed:', changes['editTask'].currentValue);
-    }
-
-    if (changes['selectedTask']) {
-      console.log('selectedTask changed:',changes['selectedTask'].currentValue);
-  }
-}
   ngAfterViewInit(){
     setTimeout(()=>{
       this.taskForm.form.patchValue(this.selectedTask);
@@ -42,7 +33,7 @@ export class CreateTaskComponent {
     this.CloseForm.emit(false);
   }
   OnFormSubmitted(form:NgForm){
-    console.log(form.value);
+    // console.log(form.value);
     this.emitTask.emit(form.value);
     form.resetForm();
     this.CloseForm.emit(false);

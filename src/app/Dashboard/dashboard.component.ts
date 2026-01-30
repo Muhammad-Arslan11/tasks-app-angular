@@ -36,19 +36,17 @@ export class DashboardComponent {
     this.showCreateTaskForm = false;
   }
   createOrUpdateTask(data: Task) {
-    console.log('data: ',data);
-    if(this.editMode){
+    // console.log('data: ',data);
+    if(this.editMode && this.selectedId){
       this.selectedTask = data;
       this.taskService.updateTask(data, this.selectedId,).subscribe({
         next:(res)=> {
+          console.log(res)
           if(!res){
             return;
           }
-          // update locally
-          console.log('-------')
-          const taskToUpdate = this.tasks.findIndex((t)=> t.id === this.selectedId);
-          const updatedTask = this.tasks[taskToUpdate] = data;
-          return this.tasks[taskToUpdate] = updatedTask;
+          this.fetchAllTasks();
+          this.fetchAllTasks();
         }
       });
     }else{
@@ -77,8 +75,13 @@ export class DashboardComponent {
   deleteTask(id: string | undefined) {
    this.taskService.deleteTask(id).subscribe({
       next: (res) => {
+        if(!res){
+          return;
+        }
+         this.fetchAllTasks();
+         this.fetchAllTasks();
         // console.log(res);
-        this.tasks = this.tasks.filter((task) => task.id !== id);
+        // this.tasks = this.tasks.filter((task) => task.id !== id);
       },
       error: (error) => console.log(error),
 
