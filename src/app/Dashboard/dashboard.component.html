@@ -1,46 +1,54 @@
-<app-create-task 
-        *ngIf="showCreateTaskForm" 
-        (emitTask)="createOrUpdateTask($event)"
-        (CloseForm)="CloseCreateTaskForm()"
-        [selectedId]="selectedId"
-        [selectedTask]="selectedTask"
-        [editTask]="editMode"
-></app-create-task>
-
+@if (showCreateTaskForm) {
+  <app-create-task
+    (emitTask)="createOrUpdateTask($event)"
+    (CloseForm)="CloseCreateTaskForm()"
+    [selectedId]="selectedId"
+    [selectedTask]="selectedTask"
+    [editTask]="editMode"
+  ></app-create-task>
+}
+<ng-template>
+  @if (errorMsg) {
+    <div class="sb sb-error">{{ errorMsg }}</div>
+  }
+</ng-template>
 <div class="dashboard-container">
-    <div style="display: flex;">
-        <div style="width: 50%">
-            <h2>Dashboard</h2>
-        </div>
-        <div style="width: 50%; text-align: right;">
-            <button class="create-task-btn" (click)="OpenCreateTaskForm()">Create Task</button>
-            <button type="button" class="create-task-btn" (click)="fetchAllTasks()">Fetch Tasks</button>
-            <button class="create-task-btn" (click)="deleteAllTasks()">Clear All Tasks</button>
-        </div>
+  <div style="display: flex">
+    <div style="width: 50%">
+      <h2>Dashboard</h2>
     </div>
-
-    <hr>
-
- <div *ngIf="tasks.length === 0">No Tasks Available. Try Creating One.</div>
-    <div *ngIf="tasks.length !== 0" class="dashboard-item-container">
-            <div class="task-item" [ngClass]="'task-' + task.status" *ngFor="let task of tasks">
-                <div class="task-title">
-                    <h3>{{task.title}}</h3>
-                </div>
-                <p><b>Assigned to: </b>{{task.assignedTo}}</p>
-                <p><b>Priority: </b>{{task.priority}}</p>
-                <p><b>Status: </b>{{task.status}}</p>
-                <div class="task-action-icons">
-                    <button class="task-action-btn" title="Detail">
-                       <i class="fa-solid fa-circle-info"></i>
-                    </button>
-                    <button class="task-action-btn" title="Edit" (click)="editTask(task.id)">
-                       <i class="fa-solid fa-pen-to-square"></i>
-                    </button>
-                    <button class="task-action-btn" title="Delete" (click)="deleteTask(task.id)">
-                        <i class="fa-solid fa-trash"></i>
-                    </button>            
-                </div>
-            </div>
+    <div style="width: 50%; text-align: right">
+      <button class="create-task-btn" (click)="OpenCreateTaskForm()">Create Task</button>
+      <button type="button" class="create-task-btn" (click)="fetchAllTasks()">Fetch Tasks</button>
+      <button class="create-task-btn" (click)="deleteAllTasks()">Clear All Tasks</button>
     </div>
+  </div>
+
+  <hr />
+
+  @if (tasks.length === 0) {
+    <div>No Tasks Available. Try Creating One.</div>
+  } @else {
+    <div class="dashboard-item-container">
+      <div class="task-item" [ngClass]="'task-' + task.status" *ngFor="let task of tasks">
+        <div class="task-title">
+          <h3>{{ task.title }}</h3>
+        </div>
+        <p><b>Assigned to: </b>{{ task.assignedTo }}</p>
+        <p><b>Priority: </b>{{ task.priority }}</p>
+        <p><b>Status: </b>{{ task.status }}</p>
+        <div class="task-action-icons">
+          <button class="task-action-btn" title="Detail">
+            <i class="fa-solid fa-circle-info"></i>
+          </button>
+          <button class="task-action-btn" title="Edit" (click)="editTask(task.id)">
+            <i class="fa-solid fa-pen-to-square"></i>
+          </button>
+          <button class="task-action-btn" title="Delete" (click)="deleteTask(task.id)">
+            <i class="fa-solid fa-trash"></i>
+          </button>
+        </div>
+      </div>
+    </div>
+  }
 </div>

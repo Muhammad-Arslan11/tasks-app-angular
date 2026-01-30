@@ -1,7 +1,7 @@
 import { Component, OnInit, inject, EventEmitter, Output } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { CreateTaskComponent } from './create-task/create-task.component';
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 import { Inject } from '@angular/core';
 import { Task } from '../Model/Task';
 import { pipe, map } from 'rxjs';
@@ -16,16 +16,21 @@ import { TaskService } from '../Services/task.service';
 })
 export class DashboardComponent {
   constructor(private taskService: TaskService) { }
-
+  
   tasks: any[] = [];
   showCreateTaskForm: boolean = false;
   http: HttpClient = inject(HttpClient);
   selectedId: string | undefined;
   editMode:boolean = false;
   selectedTask!:Task;
+  errorMsg!:string;
 
   ngOnInit() {
-    // this.fetchAllTasks();
+    this.taskService.errorSubject.subscribe({
+      next:(httpError)=>{
+        this.handleErrorResponse(httpError);
+      }
+    })
   }
 
   OpenCreateTaskForm() {
@@ -39,31 +44,14 @@ export class DashboardComponent {
     // console.log('data: ',data);
     if(this.editMode && this.selectedId){
       this.selectedTask = data;
-      this.taskService.updateTask(data, this.selectedId,).subscribe({
-        next:(res)=> {
-          console.log(res)
-          if(!res){
-            return;
-          }
-          this.fetchAllTasks();
-          this.fetchAllTasks();
-        }
-      });
+      this.taskService.updateTask(data, this.selectedId,);
     }else{
       this.selectedTask = { title: '',desc: '', assignedTo: '', createdAt: '',priority: '',status: '',}
-      this.taskService.createTask(data).subscribe()
+      this.taskService.createTask(data);
     }
   }
   fetchAllTasks() {
-    this.taskService.getAllTasks().subscribe({
-      next: (task) => {
-        console.log(task);
-        setTimeout(() => {
-          this.tasks = task;
-        }, 100);
-      },
-      error:(error)=>{console.log(error)}
-    });
+    this.taskService.getAllTasks();
   }
   editTask(id: string) {
     this.showCreateTaskForm = true;
@@ -73,21 +61,23 @@ export class DashboardComponent {
     this.selectedTask = this.tasks.find((t)=> t.id === id);
   }
   deleteTask(id: string | undefined) {
-   this.taskService.deleteTask(id).subscribe({
-      next: (res) => {
-        if(!res){
-          return;
-        }
-         this.fetchAllTasks();
-         this.fetchAllTasks();
-        // console.log(res);
-        // this.tasks = this.tasks.filter((task) => task.id !== id);
-      },
-      error: (error) => console.log(error),
-
-    });
+   this.taskService.deleteTask(id);
   }
   deleteAllTasks() {
-      this.taskService.deleteAllTasks().subscribe();
+      this.taskService.deleteAllTasks();
+  }
+  handleErrorResponse(err:HttpErrorResponse){
+    // console.log('error.message: ', err.message);
+    // console.log('error.error: ', err.error.error);
+  if(err.error.error === 'Permission denied'){
+    this.errorMsg = err.message
+  }else{
+    this.errorMsg = 'You do not have permission to perform this action'
+  }
+  console.log(this.errorMsg);
+  setTimeout(()=>{
+    this.errorMsg = '';
+    console.log(this.errorMsg)
+  }, 3000)
   }
 }
