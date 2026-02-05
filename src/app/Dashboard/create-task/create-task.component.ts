@@ -15,17 +15,15 @@ export class CreateTaskComponent {
   @Output() emitTask:EventEmitter<Task> = new EventEmitter<Task>();
   @Input() editTask:boolean = false;
   @Input() selectedId:string | undefined;
-  @Input() selectedTask!: Task;
+  @Input() selectedTask!: Task | undefined;
 
   @ViewChild('taskForm') taskForm!:NgForm;
 
   ngOnInit(){
-    // console.log('editTask: ',this.editTask);
-    // console.log('selectedTask: ', this.selectedTask);
   }
   ngAfterViewInit(){
     setTimeout(()=>{
-      this.taskForm.form.patchValue(this.selectedTask);
+      this.taskForm.form.patchValue(this.selectedTask ?? {});
     }, 100);
    
   }

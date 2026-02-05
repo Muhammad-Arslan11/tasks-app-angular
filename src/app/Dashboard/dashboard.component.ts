@@ -1,10 +1,10 @@
-import { Component, OnInit, inject, EventEmitter, Output } from '@angular/core';
+import { Component, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { CreateTaskComponent } from './create-task/create-task.component';
 import { HttpClient, HttpErrorResponse } from '@angular/common/http';
-import { Inject } from '@angular/core';
+
+import { CreateTaskComponent } from './create-task/create-task.component';
+import { TaskDetailsComponent } from './task-details/task-details.component';
 import { Task } from '../Model/Task';
-import { pipe, map } from 'rxjs';
 import { TaskService } from '../Services/task.service';
 
 @Component({
@@ -12,72 +12,93 @@ import { TaskService } from '../Services/task.service';
   templateUrl: './dashboard.component.html',
   styleUrls: ['./dashboard.css'],
   standalone: true,
-  imports: [CreateTaskComponent, CommonModule]
+  imports: [CreateTaskComponent, CommonModule, TaskDetailsComponent]
 })
-export class DashboardComponent {
-  constructor(private taskService: TaskService) { }
-  
-  tasks: any[] = [];
-  showCreateTaskForm: boolean = false;
-  http: HttpClient = inject(HttpClient);
-  selectedId: string | undefined;
-  editMode:boolean = false;
-  selectedTask!:Task;
-  errorMsg!:string;
+export class DashboardComponent implements OnInit {
 
-  ngOnInit() {
+  constructor(private taskService: TaskService) {}
+
+  http = inject(HttpClient);
+
+  tasks: Task[] | undefined= [];
+  selectedTask!: Task | undefined;              
+  taskData!: Task | undefined;                  
+  selectedId!: string | undefined;
+
+  showCreateTaskForm = false;
+  showTaskDetails = false;
+  editMode = false;
+
+  errorMsg: string | null = null;   
+
+  ngOnInit(): void {
     this.taskService.errorSubject.subscribe({
-      next:(httpError)=>{
+      next: (httpError) => {
         this.handleErrorResponse(httpError);
       }
-    })
+    });
+
+    this.fetchAllTasks();
   }
 
-  OpenCreateTaskForm() {
+  OpenCreateTaskForm(): void {
     this.showCreateTaskForm = true;
   }
 
-  CloseCreateTaskForm() {
+  CloseCreateTaskForm(): void {
     this.showCreateTaskForm = false;
+    this.editMode = false;
+    this.selectedId = undefined;
+    this.selectedTask = undefined;
   }
-  createOrUpdateTask(data: Task) {
-    // console.log('data: ',data);
-    if(this.editMode && this.selectedId){
-      this.selectedTask = data;
-      this.taskService.updateTask(data, this.selectedId,);
-    }else{
-      this.selectedTask = { title: '',desc: '', assignedTo: '', createdAt: '',priority: '',status: '',}
+
+  openTaskDetails(id: string | undefined): void {
+    if (!id) return;
+
+    this.showTaskDetails = true;
+    this.taskData = this.tasks?.find(task => task.id === id);
+  }
+
+  createOrUpdateTask(data: Task): void {
+    if (this.editMode && this.selectedId) {
+      this.taskService.updateTask(data, this.selectedId);
+    } else {
       this.taskService.createTask(data);
     }
   }
-  fetchAllTasks() {
-    this.taskService.getAllTasks();
+
+  fetchAllTasks(): void {
+    this.taskService.getAllTasks().subscribe(res => {
+      this.tasks = res;
+    });
   }
-  editTask(id: string) {
+
+  editTask(id: string | undefined): void {
+    if (!id) return;
+
     this.showCreateTaskForm = true;
-    this.selectedId = id;
     this.editMode = true;
-    // get the data from id
-    this.selectedTask = this.tasks.find((t)=> t.id === id);
+    this.selectedId = id;
+    this.selectedTask = this.tasks?.find(t => t.id === id);
   }
-  deleteTask(id: string | undefined) {
-   this.taskService.deleteTask(id);
+
+  deleteTask(id: string | undefined): void {    
+    if (!id) return;
+    this.taskService.deleteTask(id);
   }
-  deleteAllTasks() {
-      this.taskService.deleteAllTasks();
+  deleteAllTasks(): void {
+    this.taskService.deleteAllTasks();
   }
-  handleErrorResponse(err:HttpErrorResponse){
-    // console.log('error.message: ', err.message);
-    // console.log('error.error: ', err.error.error);
-  if(err.error.error === 'Permission denied'){
-    this.errorMsg = err.message
-  }else{
-    this.errorMsg = 'You do not have permission to perform this action'
-  }
-  console.log(this.errorMsg);
-  setTimeout(()=>{
-    this.errorMsg = '';
-    console.log(this.errorMsg)
-  }, 3000)
+
+  handleErrorResponse(err: HttpErrorResponse): void {
+    if (err.error?.error === 'Permission denied') {
+      this.errorMsg = err.message;
+    } else {
+      this.errorMsg = 'You do not have permission to perform this action';
+    }
+
+    setTimeout(() => {
+      this.errorMsg = null;
+    }, 3000);
   }
 }

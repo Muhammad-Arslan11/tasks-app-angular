@@ -1,16 +1,16 @@
-@if (showCreateTaskForm) {
   <app-create-task
+  *ngIf="showCreateTaskForm"
     (emitTask)="createOrUpdateTask($event)"
     (CloseForm)="CloseCreateTaskForm()"
     [selectedId]="selectedId"
     [selectedTask]="selectedTask"
     [editTask]="editMode"
   ></app-create-task>
-}
-<ng-template>
-  @if (errorMsg) {
+
+  <app-task-details *ngIf="showTaskDetails" (closeTaskDetails)="showTaskDetails = false"
+  [tasksData]="taskData"></app-task-details>
+<ng-template *ngIf="errorMsg">
     <div class="sb sb-error">{{ errorMsg }}</div>
-  }
 </ng-template>
 <div class="dashboard-container">
   <div style="display: flex">
@@ -26,10 +26,9 @@
 
   <hr />
 
-  @if (tasks.length === 0) {
-    <div>No Tasks Available. Try Creating One.</div>
-  } @else {
-    <div class="dashboard-item-container">
+    <div *ngIf="tasks?.length === 0">No Tasks Available. Try Creating One.</div>
+  
+    <div *ngIf="tasks?.length !== 0" class="dashboard-item-container">
       <div class="task-item" [ngClass]="'task-' + task.status" *ngFor="let task of tasks">
         <div class="task-title">
           <h3>{{ task.title }}</h3>
@@ -38,7 +37,7 @@
         <p><b>Priority: </b>{{ task.priority }}</p>
         <p><b>Status: </b>{{ task.status }}</p>
         <div class="task-action-icons">
-          <button class="task-action-btn" title="Detail">
+          <button class="task-action-btn" title="Detail" (click)="openTaskDetails(task.id)">
             <i class="fa-solid fa-circle-info"></i>
           </button>
           <button class="task-action-btn" title="Edit" (click)="editTask(task.id)">
@@ -50,5 +49,4 @@
         </div>
       </div>
     </div>
-  }
 </div>
